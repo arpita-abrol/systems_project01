@@ -4,12 +4,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
 
-/*
+/*==========
 Args: a pointer to a directory
 Return: void
 Function: hard-coded cd command
-*/
+==========*/
 void cd( char *dir ) {
   if( chdir(dir) == -1 ) {
     printf("The system cannot find the path specified.\n");
@@ -20,22 +21,58 @@ void cd( char *dir ) {
 }
 
 
-/*
+/*==========
 Args: none
 Return: void
 Function: hard-coded exit command
-*/
+==========*/
 void exit_funct() {
   exit(0);
 }
 
 
+/*==========
 
-/*
+==========*/
+void changeIn( char *cmd[] , int in) {
+  char *Rin = cmd[in+1]; //file
+  umask(000);
+  int fd = open(Rin, O_CREAT | O_RDONLY, 0644 );
+  dup2(fd, STDIN_FILENO);
+  close(fd);
+  execvp(cmd[0], cmd);
+}
+
+
+/*==========
+
+==========*/
+void changeOut(char * cmd[], int out ) {
+
+}
+
+/*==========
+Args: command, search for chr
+Return: first time something is present in the command
+Function: searches aray for sometihng
+==========*/
+int search(char *cmd[], char *chr) {
+  int ctr, num;
+  num = -1; //if not present, returns -1
+  for( ctr = 0; cmd[ctr]; ctr++ ) {
+    if( strcmp(cmd[ctr], chr) == 0 ) {
+      return ctr;
+    }
+  }
+  return num;
+}
+
+
+/*==========
 Args: one command (post semicolon parsing)
 Return: void
 Function: removes all spaces
-*/
+==========*/
 void removeSpaces( char *cmd[]) {
   char *new[sizeof(&cmd)];
   int i ,j;
@@ -54,11 +91,11 @@ void removeSpaces( char *cmd[]) {
 }
 
 
-/*
+/*==========
 Args: input: input string with semicolons
 Return: void
 Function: the shell, ofr the most part. in charge of running command splitting and forking, and 'special' occurances like piping, cd, exit, redirect, etc
-*/
+==========*/
 void cmdline(char *input) {
   strtok(input, "\n"); //rm new line
   char *command[sizeof(input)];
@@ -88,8 +125,19 @@ void cmdline(char *input) {
     //note: rm spaces
     removeSpaces(sub_command);
 
+
+    
     //'special' stuff, woohoo
-    if( strcmp(sub_command[0], "cd") == 0 ) {
+    int pipe = search(sub_command, "|");
+    int redirIn = search(sub_command, "<");
+    int redirOut = search(sub_command, ">");
+    if( redirIn > -1 ) {
+      changeIn(sub_command, redirIn);
+    }
+    else if( redirOut > -1 ) {
+      changeOut(sub_command, redirOut);
+    }
+    else if( strcmp(sub_command[0], "cd") == 0 ) {
       cd(sub_command[1]);
     }
     else if( strcmp(sub_command[0], "exit") == 0 ) {
