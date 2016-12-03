@@ -33,35 +33,48 @@ void exit_funct() {
 
 /*==========
 
-==========*/
+  ==========*/
 void changeIn( char *cmd[] , int inR) {
   char *f = cmd[inR+1];
-  cmd[inR]=0;
-  int fd = open(f,O_CREAT|O_RDWR,0644);
-  dup2(fd,dup(STDIN_FILENO));
-  int fff = fork();
+  int fd = open(f, O_CREAT|O_RDWR, 0644);
+  dup2(fd, 0);
+  close(fd);
+  int ff = fork();
   int status;
-  if(fff == 0){
+  if(ff == 0){
     execvp(cmd[0],cmd);
   }
-  else wait(&status);
-  dup2(dup(STDIN_FILENO),STDIN_FILENO);
-  close(fd);
-}
-
-
-/*==========
-
-==========*/
-void changeOut(char * cmd[], int out ) {
+  else {
+    wait(&status);
+  }
+  
 
 }
 
 /*==========
-Args: command, search for chr
-Return: first time something is present in the command
-Function: searches aray for sometihng
-==========*/
+
+  ==========*/
+void changeOut(char * cmd[], int inR ) {
+  char *f = cmd[inR+1];
+  cmd[inR] = NULL;
+  int std = dup(STDIN_FILENO);
+  int fd = open(f, O_CREAT|O_RDWR, 0644);
+  dup2(fd, STDIN_FILENO);
+  int ff = fork();
+  int status;
+  if(ff == 0){
+    execvp(cmd[0],cmd);
+  }
+  else {
+    wait(&status);
+  }
+}
+
+/*==========
+  Args: command, search for chr
+  Return: first time something is present in the command
+  Function: searches aray for sometihng
+  ==========*/
 int search(char *cmd[], char *chr) {
   int ctr, num;
   num = -1; //if not present, returns -1
