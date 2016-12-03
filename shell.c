@@ -34,13 +34,19 @@ void exit_funct() {
 /*==========
 
 ==========*/
-void changeIn( char *cmd[] , int in) {
-  char *Rin = cmd[in+1]; //file
-  umask(000);
-  int fd = open(Rin, O_CREAT | O_RDONLY, 0644 );
-  dup2(fd, STDIN_FILENO);
+void changeIn( char *cmd[] , int inR) {
+  char *f = cmd[inR+1];
+  cmd[inR]=0;
+  int fd = open(f,O_CREAT|O_RDWR,0644);
+  dup2(fd,dup(STDIN_FILENO));
+  int fff = fork();
+  int status;
+  if(fff == 0){
+    execvp(cmd[0],cmd);
+  }
+  else wait(&status);
+  dup2(dup(STDIN_FILENO),STDIN_FILENO);
   close(fd);
-  execvp(cmd[0], cmd);
 }
 
 
